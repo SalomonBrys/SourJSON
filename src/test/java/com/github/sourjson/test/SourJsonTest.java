@@ -28,14 +28,14 @@ import org.testng.annotations.Test;
 
 import com.github.sourjson.SourJson;
 import com.github.sourjson.SourJson.AllowEmpty;
-import com.github.sourjson.annotation.SJCheckForNull;
-import com.github.sourjson.annotation.SJDisregardParent;
-import com.github.sourjson.annotation.SJDisregardedParent;
-import com.github.sourjson.annotation.SJExclude;
-import com.github.sourjson.annotation.SJFieldName;
-import com.github.sourjson.annotation.SJSince;
-import com.github.sourjson.annotation.SJStrict;
-import com.github.sourjson.annotation.SJUntil;
+import com.github.sourjson.annotation.SCheckForNull;
+import com.github.sourjson.annotation.DisregardParent;
+import com.github.sourjson.annotation.DisregardedParent;
+import com.github.sourjson.annotation.Exclude;
+import com.github.sourjson.annotation.FieldName;
+import com.github.sourjson.annotation.Since;
+import com.github.sourjson.annotation.StrictType;
+import com.github.sourjson.annotation.Until;
 import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.exception.UnknownClassException;
 import com.github.sourjson.translat.SJTranslater;
@@ -408,7 +408,7 @@ public class SourJsonTest {
 	
 	static class SimpleBean {
 		String name;
-		@SJFieldName("count")
+		@FieldName("count")
 		int value;
 		public SimpleBean(String name, int value) {
 			this.name = name;
@@ -508,7 +508,7 @@ public class SourJsonTest {
 
 	// ========================================== MANUAL TRANSLATER ==========================================
 	
-	static class SimpleBeanTranslater extends SJTranslater<SimpleBean> {
+	static class SimpleBeanTranslater implements SJTranslater<SimpleBean> {
 		@SuppressWarnings("unchecked")
 		@Override public @CheckForNull
 		JSONObject serialize(SimpleBean obj, Type type, AnnotatedElement el, Object enclosing, SourJson json) {
@@ -549,7 +549,7 @@ public class SourJsonTest {
 	// ========================================== MANUAL TRANSLATER ==========================================
 
 	static class DatedSimpleBean extends SimpleBean {
-		@SJCheckForNull Date date;
+		@SCheckForNull Date date;
 		public DatedSimpleBean(String name, int value, Date date) {
 			super(name, value);
 			this.date = date;
@@ -667,7 +667,7 @@ public class SourJsonTest {
 	@Test
 	public void checkForNullSuccess() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new DatedSimpleBean("Salomon", 42, null), 0);
 
@@ -686,7 +686,7 @@ public class SourJsonTest {
 	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Missing \\(or null\\) JSON : .*")
 	public void checkForNullFail() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new DatedSimpleBean(null, 42, null), 0);
 
@@ -700,7 +700,7 @@ public class SourJsonTest {
 
 	static class IgnoredBean {
 		static String first = "...";
-		@SJExclude String second;
+		@Exclude String second;
 		transient String third;
 		String fourth;
 		public IgnoredBean(String second, String third, String fourth) {
@@ -716,7 +716,7 @@ public class SourJsonTest {
 	@Test
 	public void ignoredFields() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new IgnoredBean("I'm exculded", "I'm transient", "I'm here!"), 0);
 
@@ -751,7 +751,7 @@ public class SourJsonTest {
 	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Cannot construct class .*")
 	public void cannotConstruct() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new IncompleteBean("Salomon", 26, new Date()), 0);
 
@@ -772,7 +772,7 @@ public class SourJsonTest {
 		private A1() {}
 	}
 	
-	@SJDisregardParent
+	@DisregardParent
 	static class B1 extends A1 {
 		int b;
 		public B1(int a, int b) {
@@ -786,7 +786,7 @@ public class SourJsonTest {
 	@Test
 	public void disregardParentFields() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new B1(21, 42), 0);
 		
@@ -805,7 +805,7 @@ public class SourJsonTest {
 
 	// ========================================== DISREGARDED PARENT ==========================================
 	
-	@SJDisregardedParent
+	@DisregardedParent
 	static class A2 {
 		int a;
 		public A2(int a) {
@@ -828,7 +828,7 @@ public class SourJsonTest {
 	@Test
 	public void disregardedParentFields() throws Exception {
 		SourJson json = new SourJson();
-		json.checkForNulls();
+		json.setCheckForNulls(true);
 
 		JSONObject ser = (JSONObject)json.toJSON(new B2(21, 42), 0);
 		
@@ -1111,16 +1111,16 @@ public class SourJsonTest {
 	// ========================================== SINCE / UNTIL ==========================================
 
 	public static class Versionned {
-		@SJUntil(0.9)
+		@Until(0.9)
 		private int first;
 		
-		@SJUntil(1.0)
+		@Until(1.0)
 		private int second;
 		
-		@SJSince(1.0)
+		@Since(1.0)
 		private int third;
 
-		@SJSince(1.1)
+		@Since(1.1)
 		private int fourth;
 
 		@SuppressWarnings("unused")
@@ -1221,13 +1221,13 @@ public class SourJsonTest {
 	// ========================================== STRICT TYPING ==========================================
 	
 	public static class StrictTypeContainer {
-		@SJStrict SimpleBean bean;
+		@StrictType SimpleBean bean;
 
-		@SJStrict Map<String, SimpleBean> map = new HashMap<>();
+		@StrictType Map<String, SimpleBean> map = new HashMap<>();
 
-		@SJStrict List<SimpleBean> list = new ArrayList<>();
+		@StrictType List<SimpleBean> list = new ArrayList<>();
 
-		@SJStrict SimpleBean[] array = new SimpleBean[1];
+		@StrictType SimpleBean[] array = new SimpleBean[1];
 
 		@SuppressWarnings("unused")
 		private StrictTypeContainer() {}
@@ -1272,6 +1272,7 @@ public class SourJsonTest {
 		assert !(to.array[0] instanceof DatedSimpleBean);
 		assert to.array[0].getClass().equals(SimpleBean.class);
 	}
+	
 }
 
 

@@ -32,7 +32,7 @@ import com.github.sourjson.SourJson;
 
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
-public abstract class SJTranslater<F> {
+public interface SJTranslater<F> {
 	/**
 	 * Converts FROM the original type TO an object more easily serializable by SourJSON
 	 * 

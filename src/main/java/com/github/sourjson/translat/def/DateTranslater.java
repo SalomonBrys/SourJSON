@@ -36,7 +36,7 @@ import com.github.sourjson.translat.SJTranslater;
  * 
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
-public class DateTranslater extends SJTranslater<Date> {
+public class DateTranslater implements SJTranslater<Date> {
 
 	/**
 	 * Formatter that will be used to (de)serialize dates

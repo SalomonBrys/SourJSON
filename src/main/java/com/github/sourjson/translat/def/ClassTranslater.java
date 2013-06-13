@@ -33,7 +33,7 @@ import com.github.sourjson.translat.SJTranslater;
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
 @SuppressWarnings("rawtypes")
-public class ClassTranslater extends SJTranslater<Class> {
+public class ClassTranslater implements SJTranslater<Class> {
 	
 	@SuppressWarnings("unchecked")
 	@Override

@@ -47,14 +47,14 @@ import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import com.github.sourjson.annotation.SJCheckForNull;
-import com.github.sourjson.annotation.SJDisregardParent;
-import com.github.sourjson.annotation.SJDisregardedParent;
-import com.github.sourjson.annotation.SJExclude;
-import com.github.sourjson.annotation.SJFieldName;
-import com.github.sourjson.annotation.SJSince;
-import com.github.sourjson.annotation.SJStrict;
-import com.github.sourjson.annotation.SJUntil;
+import com.github.sourjson.annotation.SCheckForNull;
+import com.github.sourjson.annotation.DisregardParent;
+import com.github.sourjson.annotation.DisregardedParent;
+import com.github.sourjson.annotation.Exclude;
+import com.github.sourjson.annotation.FieldName;
+import com.github.sourjson.annotation.Since;
+import com.github.sourjson.annotation.StrictType;
+import com.github.sourjson.annotation.Until;
 import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.exception.UnknownClassException;
 import com.github.sourjson.translat.SJTranslater;
@@ -63,7 +63,7 @@ import com.github.sourjson.translat.def.DateTranslater;
 import com.googlecode.gentyref.GenericTypeReflector;
 
 @SuppressWarnings("javadoc")
-public class SourJson {
+public class SourJson implements Cloneable {
 
 	public static enum AllowEmpty {
 		YES,
@@ -71,10 +71,12 @@ public class SourJson {
 		NO
 	}
 	
-	private @CheckForNull Set<Class<?>> knownClasses = new HashSet<>();
+	private @CheckForNull HashSet<Class<?>> knownClasses = new HashSet<>();
 	private boolean checkKnownClasses = false;
 	
 	private boolean checkForNulls = false;
+	
+	private boolean putTypes = true;
 	
 	@SuppressWarnings("serial")
 	private static final Map<Class<?>, Class<?>> PRIMITIVES_TO_WRAPPERS = new HashMap<Class<?>, Class<?>>() {
@@ -99,26 +101,52 @@ public class SourJson {
 		}
 	};
 
+	private HashMap<Class<?>, SJTranslater<?>> exactTranslaters = new HashMap<>();
+	private LinkedHashMap<Class<?>, SJTranslater<?>> hierarchyTranslaters = new LinkedHashMap<>();
 
-	private Map<Class<?>, SJTranslater<?>> exactTranslaters = new HashMap<>();
-	private Map<Class<?>, SJTranslater<?>> hierarchyTranslaters = new LinkedHashMap<>();
+	@SuppressWarnings("unchecked")
+	@Override
+	public SourJson clone() {
+		try {
+			SourJson clone = (SourJson)super.clone();
+			clone.knownClasses = (HashSet<Class<?>>)knownClasses.clone();
+			clone.exactTranslaters = (HashMap<Class<?>, SJTranslater<?>>)exactTranslaters.clone();
+			clone.hierarchyTranslaters = (LinkedHashMap<Class<?>, SJTranslater<?>>)hierarchyTranslaters.clone();
+			return clone;
+		}
+		catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public SourJson() {
-		addHierarchyTranslater(Date.class, new DateTranslater());
-		addHierarchyTranslater(Class.class, new ClassTranslater());
+		addTranslater(Date.class, new DateTranslater());
+		addTranslater(Class.class, new ClassTranslater());
 	}
 	
 	public <T> void addTranslater(Class<T> forClass, SJTranslater<T> translater) {
 		exactTranslaters.put(forClass, translater);
 		knownClasses.add(forClass);
 	}
+	
+	public <T> void removeTranslater(Class<T> forClass) {
+		exactTranslaters.remove(forClass);
+		knownClasses.remove(forClass);
+	}
 
 	public <T> void addHierarchyTranslater(Class<T> forClass, SJTranslater<T> translater) {
 		hierarchyTranslaters.put(forClass, translater);
+		knownClasses.add(forClass);
 	}
-	
+
+	public <T> void removeHierarchyTranslater(Class<T> forClass) {
+		hierarchyTranslaters.remove(forClass);
+		knownClasses.remove(forClass);
+	}
+
 	@SuppressWarnings("unchecked")
-	private @CheckForNull <T> SJTranslater<T> getTranslater(Class<T> forClass) {
+	public @CheckForNull <T> SJTranslater<T> getTranslater(Class<T> forClass) {
 		if (exactTranslaters.containsKey(forClass))
 			return (SJTranslater<T>)exactTranslaters.get(forClass);
 		for (Map.Entry<Class<?>, SJTranslater<?>> entry : hierarchyTranslaters.entrySet())
@@ -127,23 +155,27 @@ public class SourJson {
 		return null;
 	}
 
-	public @CheckForNull void checkKnownClasses() {
-		this.checkKnownClasses = true;
+	public void setCheckKnownClasses(boolean checkKnownClasses) {
+		this.checkKnownClasses = checkKnownClasses;
 	}
 
 	public @CheckForNull void checkKnownClasses(@CheckForNull Collection<Class<?>> classes) {
 		this.knownClasses.addAll(classes);
-		checkKnownClasses();
+		setCheckKnownClasses(true);
 	}
 
 	public @CheckForNull void checkKnownClasses(Class<?>... classes) {
 		checkKnownClasses(Arrays.asList(classes));
 	}
-	
-	public void checkForNulls() {
-		this.checkForNulls = true;
+
+	public void setCheckForNulls(boolean checkForNulls) {
+		this.checkForNulls = checkForNulls;
 	}
 	
+	public void setPutTypes(boolean putTypes) {
+		this.putTypes = putTypes;
+	}
+
 	private boolean isSystem(Class<?> cls) {
 		Package objectPackage = cls.getPackage();
 		String objectPackageName = objectPackage != null ? objectPackage.getName() : "";
@@ -152,28 +184,28 @@ public class SourJson {
 
 	static boolean IsJSONPrintable(Field field) {
 		return	!field.isSynthetic()
-			&&	!field.isAnnotationPresent(SJExclude.class)
+			&&	!field.isAnnotationPresent(Exclude.class)
 			&&	!Modifier.isStatic(field.getModifiers())
 			&&	!Modifier.isTransient(field.getModifiers())
 		;
 	}
 	
 	private String getFieldName(Field field) {
-		SJFieldName wsFieldName = field.getAnnotation(SJFieldName.class);
+		FieldName wsFieldName = field.getAnnotation(FieldName.class);
 		if (wsFieldName != null)
 			return wsFieldName.value();
 		return field.getName();
 	}
 	
 	private @CheckForNull Type getParent(Class<?> cls) {
-		if (cls.getAnnotation(SJDisregardParent.class) != null)
+		if (cls.getAnnotation(DisregardParent.class) != null)
 			return null;
 
 		Class<?> superClass = cls.getSuperclass();
 		if (superClass == null)
 			return null;
 
-		if (superClass.getAnnotation(SJDisregardedParent.class) != null)
+		if (superClass.getAnnotation(DisregardedParent.class) != null)
 			return null;
 		
 		if (isSystem(superClass))
@@ -204,7 +236,8 @@ public class SourJson {
 		SJTranslater translater = getTranslater(GenericTypeReflector.erase(fromType));
 		if (translater != null) {
 			JSONObject ret = translater.serialize(from, fromType, fromAnno, enclosing, this);
-			ret.put("!type", GenericTypeReflector.getTypeName(fromType));
+			if (putTypes)
+				ret.put("!type", GenericTypeReflector.getTypeName(fromType));
 			return ret;
 		}
 
@@ -230,7 +263,7 @@ public class SourJson {
 				Object value = it.next();
 				Object json = null;
 				if (value != null) {
-					Type valueType = fromAnno.isAnnotationPresent(SJStrict.class) ? colType : value.getClass();
+					Type valueType = fromAnno.isAnnotationPresent(StrictType.class) ? colType : value.getClass();
 					json = toJSON(value, valueType, version, fromAnno, nextAllowEmpty, from);
 				}
 				if (json != null || nextAllowEmpty != AllowEmpty.NO)
@@ -249,7 +282,7 @@ public class SourJson {
 				Object element = Array.get(from, i);
 				Object json = null;
 				if (element != null) {
-					Type elementType = fromAnno.isAnnotationPresent(SJStrict.class) ? arrayComponentType : element.getClass();
+					Type elementType = fromAnno.isAnnotationPresent(StrictType.class) ? arrayComponentType : element.getClass();
 					json = toJSON(element, elementType, version, fromAnno, nextAllowEmpty, from);
 				}
 				if (json != null || nextAllowEmpty != AllowEmpty.NO)
@@ -271,7 +304,7 @@ public class SourJson {
 				Object value = e.getValue();
 				Object json = null;
 				if (value != null) {
-					Type valueType = fromAnno.isAnnotationPresent(SJStrict.class) ? mapType : value.getClass();
+					Type valueType = fromAnno.isAnnotationPresent(StrictType.class) ? mapType : value.getClass();
 					json = toJSON(value, valueType, version, fromAnno, nextAllowEmpty, from);
 				}
 				if (json != null || nextAllowEmpty != AllowEmpty.NO)
@@ -282,7 +315,8 @@ public class SourJson {
 		
 		if (fromClass.isEnum()) {
 			JSONObject object = new JSONObject();
-			object.put("!type", GenericTypeReflector.getTypeName(fromType));
+			if (putTypes)
+				object.put("!type", GenericTypeReflector.getTypeName(fromType));
 			object.put("!enum", from.toString());
 			return object;
 		}
@@ -305,11 +339,11 @@ public class SourJson {
 				if (!IsJSONPrintable(field))
 					continue ;
 
-				SJUntil until = field.getAnnotation(SJUntil.class);
+				Until until = field.getAnnotation(Until.class);
 				if (until != null && version > until.value())
 					continue ;
 
-				SJSince since = field.getAnnotation(SJSince.class);
+				Since since = field.getAnnotation(Since.class);
 				if (since != null && version < since.value())
 					continue ;
 
@@ -321,7 +355,7 @@ public class SourJson {
 
 					Type fieldType = fieldValue.getClass();
 					Class<?> fieldClass = GenericTypeReflector.erase(fieldType);
-					if (Map.class.isAssignableFrom(fieldClass) || Collection.class.isAssignableFrom(fieldClass) || field.getAnnotation(SJStrict.class) != null)
+					if (Map.class.isAssignableFrom(fieldClass) || Collection.class.isAssignableFrom(fieldClass) || field.getAnnotation(StrictType.class) != null)
 						fieldType = GenericTypeReflector.getExactFieldType(field, fromType);
 
 					Object json = toJSON(fieldValue, fieldType, version, field, nextAllowEmpty, from);
@@ -339,7 +373,8 @@ public class SourJson {
 			fromType = getParent(fromClass);
 		}
 
-		object.put("!type", GenericTypeReflector.getTypeName(typeOnServer));
+		if (putTypes)
+			object.put("!type", GenericTypeReflector.getTypeName(typeOnServer));
 		
 		return object;
 	}
@@ -494,16 +529,16 @@ public class SourJson {
 
 					String fieldName = getFieldName(field);
 
-					SJUntil until = field.getAnnotation(SJUntil.class);
+					Until until = field.getAnnotation(Until.class);
 					if (until != null && version > until.value())
 						continue ;
 
-					SJSince since = field.getAnnotation(SJSince.class);
+					Since since = field.getAnnotation(Since.class);
 					if (since != null && version < since.value())
 						continue ;
 
 					if (!fromObject.containsKey(fieldName) || fromObject.get(fieldName) == null) {
-						if (!checkForNulls || field.isAnnotationPresent(SJCheckForNull.class))
+						if (!checkForNulls || field.isAnnotationPresent(SCheckForNull.class))
 							continue ;
 
 						throw new SourJsonException("Missing (or null) JSON : " + field);
@@ -618,5 +653,4 @@ public class SourJson {
 	public @CheckForNull <T> T fromJSON(@CheckForNull Object from, Class<T> toClass, double version) throws SourJsonException {
 		return fromJSON(from, (Type)toClass, version, null, null);
 	}
-
 }
