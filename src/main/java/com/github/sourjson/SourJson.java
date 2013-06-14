@@ -135,6 +135,17 @@ public class SourJson implements Cloneable {
 		knownClasses.remove(forClass);
 	}
 
+	public <T> void removeTranslater(SJTranslater<?> tr) {
+		Iterator<Entry<Class<?>, SJTranslater<?>>> it = exactTranslaters.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Class<?>, SJTranslater<?>> entry = it.next();
+			if (entry.getValue().equals(tr)) {
+				knownClasses.remove(entry.getKey());
+				it.remove();
+			}
+		}
+	}
+
 	public <T> void addHierarchyTranslater(Class<T> forClass, SJTranslater<T> translater) {
 		hierarchyTranslaters.put(forClass, translater);
 		knownClasses.add(forClass);
@@ -143,6 +154,17 @@ public class SourJson implements Cloneable {
 	public <T> void removeHierarchyTranslater(Class<T> forClass) {
 		hierarchyTranslaters.remove(forClass);
 		knownClasses.remove(forClass);
+	}
+
+	public <T> void removeHierarchyTranslater(SJTranslater<?> tr) {
+		Iterator<Entry<Class<?>, SJTranslater<?>>> it = hierarchyTranslaters.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Class<?>, SJTranslater<?>> entry = it.next();
+			if (entry.getValue().equals(tr)) {
+				knownClasses.remove(entry.getKey());
+				it.remove();
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
