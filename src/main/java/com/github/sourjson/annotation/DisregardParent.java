@@ -25,11 +25,12 @@ import java.lang.annotation.Target;
 /**
  * Tells SourJSON to stop looking up the inheritance tree for field to (de)serialize
  * It will still consider the annotated class
- * 
+ *
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
 public @interface DisregardParent {
+	// Flag annotation
 }

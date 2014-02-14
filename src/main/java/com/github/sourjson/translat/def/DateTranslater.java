@@ -28,12 +28,13 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
+import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.translat.SJTranslater;
 
 /**
  * Date default translater
  * Translate from date to string and back
- * 
+ *
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
 public class DateTranslater implements SJTranslater<Date> {
@@ -42,17 +43,17 @@ public class DateTranslater implements SJTranslater<Date> {
 	 * Formatter that will be used to (de)serialize dates
 	 */
 	private SimpleDateFormat formater;
-	
+
 	/** */
 	public DateTranslater() {
 		formater = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formater.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public @CheckForNull
-	JSONObject serialize(Date obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json) {
+	JSONObject serialize(Date obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) {
 		JSONObject ret = new JSONObject();
 		ret.put("GMT", formater.format(obj));
 		return ret;
@@ -60,7 +61,7 @@ public class DateTranslater implements SJTranslater<Date> {
 
 	@Override
 	public @CheckForNull
-	Date deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json) {
+	Date deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) {
 		try {
 			return formater.parse((String)obj.get("GMT"));
 		}

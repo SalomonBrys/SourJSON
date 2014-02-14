@@ -25,11 +25,12 @@ import javax.annotation.meta.TypeQualifierNickname;
 
 /**
  * Tells SourJSON that the annotated field is allowed to be null / absent.
- * 
+ *
  * @author Salomon BRYS <salomon.brys@gmail.com>
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @TypeQualifierNickname @CheckForNull
 public @interface SCheckForNull {
+	// Flag annotation
 }

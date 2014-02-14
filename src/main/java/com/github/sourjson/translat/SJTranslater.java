@@ -24,11 +24,12 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
+import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.exception.SourJsonException;
 
 /**
  * Translater for SourJson
- * 
+ *
  * @param <F> The class to transform
 
  * @author Salomon BRYS <salomon.brys@gmail.com>
@@ -36,7 +37,7 @@ import com.github.sourjson.exception.SourJsonException;
 public interface SJTranslater<F> {
 	/**
 	 * Converts FROM the original type TO an object more easily serializable by SourJSON
-	 * 
+	 *
 	 * @param obj The object to convert
 	 * @param type The real type of the object to convert (can be used for generics reflexivity)
 	 * @param el All annotations annotating the element to translate
@@ -45,11 +46,11 @@ public interface SJTranslater<F> {
 	 * @param version The curent version
 	 * @return The object to serialize
 	 */
-	public abstract @CheckForNull JSONObject serialize(F obj, Type type, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) throws SourJsonException;
-	
+	public abstract @CheckForNull JSONObject serialize(F obj, Type type, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) throws SourJsonException;
+
 	/**
 	 * Converts FROM an object deserialized by SourJSON TO the original type
-	 * 
+	 *
 	 * @param obj The object to convert
 	 * @param type The real type of the object to obtain (can be used for generics reflexivity)
 	 * @param el All annotations annotating the element to obtain
