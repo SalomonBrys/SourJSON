@@ -24,7 +24,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.exception.SourJsonException;
 
 /**
@@ -46,7 +45,7 @@ public interface SJTranslater<F> {
 	 * @param version The curent version
 	 * @return The object to serialize
 	 */
-	public abstract @CheckForNull JSONObject serialize(F obj, Type type, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) throws SourJsonException;
+	public abstract @CheckForNull JSONObject serialize(F obj, Type type, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) throws SourJsonException;
 
 	/**
 	 * Converts FROM an object deserialized by SourJSON TO the original type

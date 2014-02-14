@@ -38,6 +38,30 @@ public class FieldAnnotationsTest {
 		private IgnoredBean() {}
 	}
 
+	public static class StrictTypeContainer {
+		@StrictType SimpleBean bean;
+
+		@StrictType Map<String, SimpleBean> stringMap = new HashMap<>();
+
+		@StrictType Map<Integer, SimpleBean> intMap = new HashMap<>();
+
+		@StrictType List<SimpleBean> list = new ArrayList<>();
+
+		@StrictType SimpleBean[] array = new SimpleBean[1];
+
+		@SuppressWarnings("unused")
+		private StrictTypeContainer() {}
+
+		public StrictTypeContainer(SimpleBean bean, SimpleBean inStringMap, SimpleBean inIntMap, SimpleBean inList, SimpleBean inArray) {
+			super();
+			this.bean = bean;
+			this.stringMap.put("one", inStringMap);
+			this.intMap.put(Integer.valueOf(42), inIntMap);
+			this.list.add(inList);
+			array[0] = inArray;
+		}
+	}
+
 	@Test
 	public void ignoredFields() throws Exception {
 		SourJson json = new SourJson();
@@ -146,27 +170,6 @@ public class FieldAnnotationsTest {
 		json.fromJSON(Integer.valueOf(42), SimpleBean.class, 0);
 	}
 
-	public static class StrictTypeContainer {
-		@StrictType SimpleBean bean;
-
-		@StrictType Map<String, SimpleBean> map = new HashMap<>();
-
-		@StrictType List<SimpleBean> list = new ArrayList<>();
-
-		@StrictType SimpleBean[] array = new SimpleBean[1];
-
-		@SuppressWarnings("unused")
-		private StrictTypeContainer() {}
-
-		public StrictTypeContainer(SimpleBean bean, SimpleBean inMap, SimpleBean inList, SimpleBean inArray) {
-			super();
-			this.bean = bean;
-			this.map.put("one", inMap);
-			this.list.add(inList);
-			array[0] = inArray;
-		}
-	}
-
 	@Test
 	public void strictTyping() throws Exception {
 		SourJson json = new SourJson();
@@ -175,13 +178,15 @@ public class FieldAnnotationsTest {
 				new DatedSimpleBean("Salomon", 21, new Date()),
 				new DatedSimpleBean("Salomon", 42, new Date()),
 				new DatedSimpleBean("Salomon", 63, new Date()),
-				new DatedSimpleBean("Salomon", 84, new Date())
+				new DatedSimpleBean("Salomon", 84, new Date()),
+				new DatedSimpleBean("Salomon", 105, new Date())
 		);
 
 		JSONObject ser = (JSONObject)json.toJSON(from, 0);
 
 		assert ((JSONObject)ser.get("bean")).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
-		assert ((JSONObject)((JSONObject)ser.get("map")).get("one")).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
+		assert ((JSONObject)((JSONObject)ser.get("stringMap")).get("one")).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
+		assert ((JSONObject)((JSONObject)((JSONArray)ser.get("intMap")).get(0)).get("!v")).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
 		assert ((JSONObject)((JSONArray)ser.get("list")).get(0)).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
 		assert ((JSONObject)((JSONArray)ser.get("array")).get(0)).get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
 
@@ -191,8 +196,10 @@ public class FieldAnnotationsTest {
 
 		assert !(to.bean instanceof DatedSimpleBean);
 		assert to.bean.getClass().equals(SimpleBean.class);
-		assert !(to.map.get("one") instanceof DatedSimpleBean);
-		assert to.map.get("one").getClass().equals(SimpleBean.class);
+		assert !(to.stringMap.get("one") instanceof DatedSimpleBean);
+		assert to.stringMap.get("one").getClass().equals(SimpleBean.class);
+		assert !(to.intMap.get(Integer.valueOf(42)) instanceof DatedSimpleBean);
+		assert to.intMap.get(Integer.valueOf(42)).getClass().equals(SimpleBean.class);
 		assert !(to.list.get(0) instanceof DatedSimpleBean);
 		assert to.list.get(0).getClass().equals(SimpleBean.class);
 		assert !(to.array[0] instanceof DatedSimpleBean);

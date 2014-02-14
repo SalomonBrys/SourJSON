@@ -7,7 +7,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.exception.SourJsonException;
 import com.googlecode.gentyref.GenericTypeReflector;
 
@@ -23,7 +22,7 @@ public class EnumTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		if (sour.isPutTypes()) {
 			JSONObject object = new JSONObject();
 			object.put("!type", typeName);

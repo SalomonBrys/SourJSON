@@ -12,7 +12,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.annotation.SCheckForNull;
 import com.github.sourjson.annotation.Since;
 import com.github.sourjson.annotation.StrictType;
@@ -83,7 +82,7 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		JSONObject object = new JSONObject();
 
 		for (FieldCache fc : fields) {
@@ -102,12 +101,11 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 				if (fc.strictType)
 					fieldType = fc.type;
 
-				Object json = sour.toJSON(fieldValue, fieldType, version, fc.field, allowEmpty.next(), from);
-				if (json != null)
-					((Map<String, Object>)object).put(fc.name, json);
+				Object json = sour.toJSON(fieldValue, fieldType, version, fc.field, from);
+				((Map<String, Object>)object).put(fc.name, json);
 			}
 			catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
+				throw new SourJsonException(e);
 			}
 			finally {
 				fc.field.setAccessible(false);
@@ -137,7 +135,7 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 			if (version < fc.since)
 				continue ;
 
-			if (!fromObject.containsKey(fc.name) || fromObject.get(fc.name) == null) {
+			if (fromObject.get(fc.name) == null) {
 				if (!sour.isCheckForAllowNulls() || fc.checkForNull)
 					continue ;
 
@@ -150,7 +148,7 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 				fc.field.set(ret, value);
 			}
 			catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
+				throw new SourJsonException(e);
 			}
 			finally {
 				fc.field.setAccessible(false);

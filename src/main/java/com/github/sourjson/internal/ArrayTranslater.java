@@ -8,7 +8,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONArray;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.annotation.StrictType;
 import com.github.sourjson.exception.SourJsonException;
 import com.googlecode.gentyref.GenericTypeReflector;
@@ -27,20 +26,17 @@ public class ArrayTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		JSONArray array = new JSONArray();
 		int length = Array.getLength(from);
-		if (!allowEmpty.allow() && length == 0)
-			return null;
 		for (int i = 0; i < length; ++i) {
 			Object element = Array.get(from, i);
 			Object json = null;
 			if (element != null) {
 				Type elementType = strictType ? arrayComponentType : element.getClass();
-				json = sour.toJSON(element, elementType, version, info.annos, allowEmpty.next(), from);
+				json = sour.toJSON(element, elementType, version, info.annos, from);
 			}
-			if (json != null || allowEmpty.next().allow())
-				array.add(json);
+			array.add(json);
 		}
 		return array;
 	}

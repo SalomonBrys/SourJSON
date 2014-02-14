@@ -28,7 +28,7 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
+import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.translat.SJTranslater;
 
 /**
@@ -53,7 +53,7 @@ public class DateTranslater implements SJTranslater<Date> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public @CheckForNull
-	JSONObject serialize(Date obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) {
+	JSONObject serialize(Date obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) {
 		JSONObject ret = new JSONObject();
 		ret.put("GMT", formater.format(obj));
 		return ret;
@@ -61,12 +61,12 @@ public class DateTranslater implements SJTranslater<Date> {
 
 	@Override
 	public @CheckForNull
-	Date deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) {
+	Date deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) throws SourJsonException {
 		try {
 			return formater.parse((String)obj.get("GMT"));
 		}
 		catch (ParseException e) {
-			throw new RuntimeException(e);
+			throw new SourJsonException(e);
 		}
 	}
 }

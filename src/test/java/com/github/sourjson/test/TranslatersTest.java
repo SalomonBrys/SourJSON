@@ -11,7 +11,7 @@ import org.json.simple.JSONValue;
 import org.testng.annotations.Test;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
+import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.test.struct.DatedSimpleBean;
 import com.github.sourjson.test.struct.SimpleBean;
 import com.github.sourjson.translat.SJTranslater;
@@ -22,7 +22,7 @@ public class TranslatersTest {
 	static class SimpleBeanTranslater implements SJTranslater<SimpleBean> {
 		@SuppressWarnings("unchecked")
 		@Override public @CheckForNull
-		JSONObject serialize(SimpleBean obj, Type type, AnnotatedElement el, Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) {
+		JSONObject serialize(SimpleBean obj, Type type, AnnotatedElement el, Object enclosing, SourJson json, double version) {
 			JSONObject ret = new JSONObject();
 			ret.put("n", obj.name);
 			ret.put("v", Long.valueOf(obj.value));
@@ -41,11 +41,8 @@ public class TranslatersTest {
 
 		JSONObject ser = (JSONObject)json.toJSON(new SimpleBean("Salomon", 42), 0);
 
-		assert ser.containsKey("!type");
 		assert ser.get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
-		assert ser.containsKey("n");
 		assert ser.get("n").equals("Salomon");
-		assert ser.containsKey("v");
 		assert ser.get("v").equals(Long.valueOf(42));
 
 		String jsonStr = ser.toJSONString();
@@ -56,8 +53,45 @@ public class TranslatersTest {
 		assert to.value == 42;
 	}
 
+	@Test
+	public void manualRemovedTranslater() throws Exception {
+		SourJson json = new SourJson();
+		json.addTranslater(SimpleBean.class, new SimpleBeanTranslater());
+		json.removeTranslater(SimpleBean.class);
 
-	// ========================================== MANUAL TRANSLATER ==========================================
+		JSONObject ser = (JSONObject)json.toJSON(new SimpleBean("Salomon", 42), 0);
+
+		assert ser.get("!type").equals("com.github.sourjson.test.struct.SimpleBean");
+		assert ser.get("name").equals("Salomon");
+		assert ser.get("count").equals(Integer.valueOf(42));
+
+		String jsonStr = ser.toJSONString();
+		Object jsonObj = JSONValue.parse(jsonStr);
+		SimpleBean to = json.fromJSON(jsonObj, SimpleBean.class, 0);
+
+		assert to.name.equals("Salomon");
+		assert to.value == 42;
+	}
+
+	@Test
+	public void manualTranslaterNoType() throws Exception {
+		SourJson json = new SourJson();
+		json.setPutTypes(false);
+		json.addTranslater(SimpleBean.class, new SimpleBeanTranslater());
+
+		JSONObject ser = (JSONObject)json.toJSON(new SimpleBean("Salomon", 42), 0);
+
+		assert !ser.containsKey("!type");
+		assert ser.get("n").equals("Salomon");
+		assert ser.get("v").equals(Long.valueOf(42));
+
+		String jsonStr = ser.toJSONString();
+		Object jsonObj = JSONValue.parse(jsonStr);
+		SimpleBean to = json.fromJSON(jsonObj, SimpleBean.class, 0);
+
+		assert to.name.equals("Salomon");
+		assert to.value == 42;
+	}
 
 	@Test
 	public void manualHierarchyTranslater() throws Exception {
@@ -68,9 +102,7 @@ public class TranslatersTest {
 
 		assert ser.containsKey("!type");
 		assert ser.get("!type").equals("com.github.sourjson.test.struct.DatedSimpleBean");
-		assert ser.containsKey("n");
 		assert ser.get("n").equals("Salomon");
-		assert ser.containsKey("v");
 		assert ser.get("v").equals(Long.valueOf(42));
 		assert !ser.containsKey("date");
 
@@ -83,8 +115,29 @@ public class TranslatersTest {
 		assert !(to instanceof DatedSimpleBean);
 	}
 
+	@Test
+	public void manualRemovedHierarchyTranslater() throws Exception {
+		SourJson json = new SourJson();
+		json.addHierarchyTranslater(SimpleBean.class, new SimpleBeanTranslater());
+		json.removeHierarchyTranslater(SimpleBean.class);
 
-	// ========================================== UNREACHABLE TRANSLATER ==========================================
+		JSONObject ser = (JSONObject)json.toJSON(new DatedSimpleBean("Salomon", 42, new Date()), 0);
+
+		assert ser.containsKey("!type");
+		assert ser.get("!type").equals("com.github.sourjson.test.struct.DatedSimpleBean");
+		assert ser.get("name").equals("Salomon");
+		assert ser.get("count").equals(Integer.valueOf(42));
+		assert ser.containsKey("date");
+
+		String jsonStr = ser.toJSONString();
+		Object jsonObj = JSONValue.parse(jsonStr);
+		SimpleBean to = json.fromJSON(jsonObj, SimpleBean.class, 0);
+
+		assert to.name.equals("Salomon");
+		assert to.value == 42;
+		assert to instanceof DatedSimpleBean;
+	}
+
 
 	@Test
 	public void unreachableTranslater() throws Exception {
@@ -114,5 +167,14 @@ public class TranslatersTest {
 		assert to.value == 42;
 		assert to.date.equals(date);
 	}
+
+	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Cannot deserialize .*")
+	public void translaterNotCorrect() throws Exception {
+		SourJson json = new SourJson();
+		json.addTranslater(SimpleBean.class, new SimpleBeanTranslater());
+
+		json.fromJSON(JSONValue.parse("[ { \"test\": \"value\"} ]"), SimpleBean.class, 0);
+	}
+
 
 }

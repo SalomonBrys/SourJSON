@@ -13,7 +13,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.annotation.StrictType;
 import com.github.sourjson.exception.SourJsonException;
 import com.googlecode.gentyref.GenericTypeReflector;
@@ -36,14 +35,11 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		Map<?, ?> fromMap = (Map<?, ?>)from;
 
-		if (fromMap.isEmpty()) {
-			if (!allowEmpty.allow())
-				return null;
+		if (fromMap.isEmpty())
 			return new JSONObject();
-		}
 
 		Type fromKType = mapKType;
 		if (fromKType == null)
@@ -57,10 +53,9 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 				Object json = null;
 				if (e.getValue() != null) {
 					Type valueType = strictType ? mapVType : e.getValue().getClass();
-					json = sour.toJSON(e.getValue(), valueType, version, info.annos, allowEmpty.next(), from);
+					json = sour.toJSON(e.getValue(), valueType, version, info.annos, from);
 				}
-				if (json != null || allowEmpty.next().allow())
-					obj.put(e.getKey().toString(), json);
+				obj.put(e.getKey().toString(), json);
 			}
 			return obj;
 		}
@@ -71,15 +66,14 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 			JSONObject obj = new JSONObject();
 			Map.Entry<?, ?> e = (Entry<?, ?>) it.next();
 			Type keyType = strictType ? fromKType : e.getKey().getClass();
-			Object json = sour.toJSON(e.getKey(), keyType, version, info.annos, allowEmpty.next(), from);
+			Object json = sour.toJSON(e.getKey(), keyType, version, info.annos, from);
 			obj.put("!k", json);
 			json = null;
 			if (e.getValue() != null) {
 				Type valueType = strictType ? mapVType : e.getValue().getClass();
-				json = sour.toJSON(e.getValue(), valueType, version, info.annos, allowEmpty.next(), from);
+				json = sour.toJSON(e.getValue(), valueType, version, info.annos, from);
 			}
-			if (json != null || allowEmpty.next().allow())
-				obj.put("!v", json);
+			obj.put("!v", json);
 			list.add(obj);
 		}
 		return list;
@@ -112,7 +106,7 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 					throw new SourJsonException("Cannot deserialize a " + entry.getClass().getSimpleName() + " into a map entry" + mapKType);
 				JSONObject entryObj = (JSONObject)entry;
 				if (!entryObj.containsKey("!k"))
-					throw new SourJsonException("JSONObject map entry is missing !k property of type " + mapKType);
+					throw new SourJsonException("Cannot deserialize a map: JSONObject map entry is missing !k property of type " + mapKType);
 				Object key = sour.fromJSON(entryObj.get("!k"), mapKType, version, info.annos, map);
 				Object value = sour.fromJSON(entryObj.get("!v"), mapVType, version, info.annos, map);
 				((Map<Object, Object>)map).put(key, value);

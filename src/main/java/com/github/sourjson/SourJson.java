@@ -23,10 +23,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.annotation.CheckForNull;
 
@@ -34,8 +32,8 @@ import org.json.simple.JSONObject;
 
 import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.internal.SJUtils;
-import com.github.sourjson.internal.TypeAndAnnos;
 import com.github.sourjson.internal.TranslaterCache;
+import com.github.sourjson.internal.TypeAndAnnos;
 import com.github.sourjson.translat.SJTranslater;
 import com.github.sourjson.translat.def.ClassTranslater;
 import com.github.sourjson.translat.def.DateTranslater;
@@ -44,25 +42,25 @@ import com.googlecode.gentyref.GenericTypeReflector;
 @SuppressWarnings("javadoc")
 public class SourJson /*implements Cloneable*/ {
 
-	public static enum AllowEmpty {
-		YES,
-		ROOT,
-		NO;
-
-		public AllowEmpty next() {
-			switch (this) {
-			case YES: return YES;
-			default: return NO;
-			}
-		}
-
-		public boolean allow() {
-			switch (this) {
-			case NO: return false;
-			default: return true;
-			}
-		}
-	}
+//	public static enum AllowEmpty {
+//		YES,
+//		ROOT,
+//		NO;
+//
+//		public AllowEmpty next() {
+//			switch (this) {
+//			case YES: return YES;
+//			default: return NO;
+//			}
+//		}
+//
+//		public boolean allow() {
+//			switch (this) {
+//			case NO: return false;
+//			default: return true;
+//			}
+//		}
+//	}
 
 	private TranslaterCache tcache = new TranslaterCache();
 
@@ -106,17 +104,6 @@ public class SourJson /*implements Cloneable*/ {
 		knownClasses.remove(forClass);
 	}
 
-	public void removeTranslater(SJTranslater<?> tr) {
-		Iterator<Entry<Class<?>, SJTranslater<?>>> it = exactTranslaters.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<Class<?>, SJTranslater<?>> entry = it.next();
-			if (entry.getValue().equals(tr)) {
-				knownClasses.remove(entry.getKey());
-				it.remove();
-			}
-		}
-	}
-
 	public <T> void addHierarchyTranslater(Class<T> forClass, SJTranslater<T> translater) {
 		hierarchyTranslaters.put(forClass, translater);
 		knownClasses.add(forClass);
@@ -125,17 +112,6 @@ public class SourJson /*implements Cloneable*/ {
 	public <T> void removeHierarchyTranslater(Class<T> forClass) {
 		hierarchyTranslaters.remove(forClass);
 		knownClasses.remove(forClass);
-	}
-
-	public void removeHierarchyTranslater(SJTranslater<?> tr) {
-		Iterator<Entry<Class<?>, SJTranslater<?>>> it = hierarchyTranslaters.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<Class<?>, SJTranslater<?>> entry = it.next();
-			if (entry.getValue().equals(tr)) {
-				knownClasses.remove(entry.getKey());
-				it.remove();
-			}
-		}
 	}
 
 	public @CheckForNull <T> SJTranslater<T> getTranslater(Class<T> forClass) {
@@ -182,7 +158,7 @@ public class SourJson /*implements Cloneable*/ {
 		return checkForAllowNulls;
 	}
 
-	public @CheckForNull Object toJSON(@CheckForNull Object from, Type fromType, double version, @CheckForNull AnnotatedElement fromAnnos, AllowEmpty allowEmpty, @CheckForNull Object enclosing) throws SourJsonException {
+	public @CheckForNull Object toJSON(@CheckForNull Object from, Type fromType, double version, @CheckForNull AnnotatedElement fromAnnos, @CheckForNull Object enclosing) throws SourJsonException {
 
 		if (from == null)
 			return null;
@@ -197,21 +173,17 @@ public class SourJson /*implements Cloneable*/ {
 
 		TypeAndAnnos info = new TypeAndAnnos(fromType, fromAnnos);
 
-		return tcache.getTranslater(info, this).serialize(from, info, enclosing, version, allowEmpty, this);
-	}
-
-	public @CheckForNull Object toJSON(Object from, Type fromType, double version, AllowEmpty allowEmpty) throws SourJsonException {
-		return toJSON(from, fromType, version, null, allowEmpty, null);
+		return tcache.getTranslater(info, this).serialize(from, info, enclosing, version, this);
 	}
 
 	public @CheckForNull Object toJSON(Object from, Type fromType, double version) throws SourJsonException {
-		return toJSON(from, fromType, version, null, AllowEmpty.NO, null);
+		return toJSON(from, fromType, version, null, null);
 	}
 
 	public @CheckForNull Object toJSON(Object from, double version) throws SourJsonException {
 		if (from == null)
 			return null;
-		return toJSON(from, from.getClass(), version, null, AllowEmpty.NO, null);
+		return toJSON(from, from.getClass(), version, null, null);
 	}
 
 	public @CheckForNull <T> T fromJSON(@CheckForNull Object from, Type toType, double version, @CheckForNull AnnotatedElement toAnnos, @CheckForNull Object enclosing) throws SourJsonException {
@@ -219,9 +191,6 @@ public class SourJson /*implements Cloneable*/ {
 			return null;
 
 		Class<?> toClass = GenericTypeReflector.erase(toType);
-
-		if (Void.class.isAssignableFrom(toClass))
-			return null;
 
 		TypeAndAnnos info = new TypeAndAnnos(toType, toAnnos);
 
@@ -242,10 +211,6 @@ public class SourJson /*implements Cloneable*/ {
 
 		return (T)tcache.getTranslater(info, this).deserialize(from, info, enclosing, version, this);
 
-	}
-
-	public @CheckForNull <T> T fromJSON(@CheckForNull Object from, Class<T> toClass, double version, @CheckForNull Object enclosing) throws SourJsonException {
-		return fromJSON(from, (Type)toClass, version, null, enclosing);
 	}
 
 	public @CheckForNull <T> T fromJSON(@CheckForNull Object from, Type toType, double version) throws SourJsonException {

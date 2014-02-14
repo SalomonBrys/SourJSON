@@ -15,7 +15,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONArray;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.annotation.StrictType;
 import com.github.sourjson.exception.SourJsonException;
 import com.googlecode.gentyref.GenericTypeReflector;
@@ -36,9 +35,7 @@ public class CollectionTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
-		if (!allowEmpty.allow() && ((Collection<?>)from).isEmpty())
-			return null;
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		JSONArray array = new JSONArray();
 		Iterator<?> it = ((Collection<?>)from).iterator();
 		while (it.hasNext()) {
@@ -46,10 +43,9 @@ public class CollectionTranslater<T> implements InternalTranslater<T> {
 			Object json = null;
 			if (value != null) {
 				Type valueType = strictType ? colParamType : value.getClass();
-				json = sour.toJSON(value, valueType, version, info.annos, allowEmpty.next(), from);
+				json = sour.toJSON(value, valueType, version, info.annos, from);
 			}
-			if (json != null || allowEmpty.next().allow())
-				array.add(json);
+			array.add(json);
 		}
 		return array;
 	}

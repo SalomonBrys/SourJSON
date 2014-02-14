@@ -24,7 +24,7 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
+import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.translat.SJTranslater;
 
 /**
@@ -38,19 +38,19 @@ public class ClassTranslater implements SJTranslater<Class> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public @CheckForNull JSONObject serialize(Class obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version, AllowEmpty allowEmpty) {
+	public @CheckForNull JSONObject serialize(Class obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) {
 		JSONObject ret = new JSONObject();
 		ret.put("name", obj.getName());
 		return ret;
 	}
 
 	@Override
-	public @CheckForNull Class deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) {
+	public @CheckForNull Class deserialize(JSONObject obj, Type typeOnServer, AnnotatedElement el, @CheckForNull Object enclosing, SourJson json, double version) throws SourJsonException {
 		try {
 			return Class.forName((String)obj.get("name"));
 		}
 		catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new SourJsonException(e);
 		}
 	}
 }

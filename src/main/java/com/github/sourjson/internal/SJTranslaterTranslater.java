@@ -7,7 +7,6 @@ import javax.annotation.CheckForNull;
 import org.json.simple.JSONObject;
 
 import com.github.sourjson.SourJson;
-import com.github.sourjson.SourJson.AllowEmpty;
 import com.github.sourjson.exception.SourJsonException;
 import com.github.sourjson.translat.SJTranslater;
 import com.googlecode.gentyref.GenericTypeReflector;
@@ -25,8 +24,8 @@ public class SJTranslaterTranslater<T> implements InternalTranslater<T> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, AllowEmpty allowEmpty, SourJson sour) throws SourJsonException {
-		JSONObject ret = translater.serialize(from, info.type, info.annos, enclosing, sour, version, allowEmpty);
+	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+		JSONObject ret = translater.serialize(from, info.type, info.annos, enclosing, sour, version);
 		if (sour.isPutTypes())
 			((Map<String, Object>)ret).put("!type", typeName);
 		return ret;

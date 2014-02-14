@@ -41,6 +41,7 @@ public class ObjectsPrimitivesTest {
 	public static class Plane {
 		public Dreamer main;
 		public int passengers;
+		public Object control = null;
 		public Plane(Dreamer d, int number) {
 			this.main = d;
 			this.passengers = number;
@@ -141,27 +142,20 @@ public class ObjectsPrimitivesTest {
 		SourJson json = new SourJson();
 		JSONObject ser = (JSONObject)json.toJSON(from, 0);
 
-		assert ser.containsKey("!type");
 		assert ser.get("!type").equals("com.github.sourjson.test.ObjectsPrimitivesTest$Plane");
-		assert ser.containsKey("passengers");
 		assert ser.get("passengers").equals(Integer.valueOf(7));
+		assert !ser.containsKey("control");
 		assert ser.containsKey("main");
 		JSONObject dreamer = (JSONObject)ser.get("main");
-		assert dreamer.containsKey("!type");
 		assert dreamer.get("!type").equals("com.github.sourjson.test.ObjectsPrimitivesTest$Dreamer");
-		assert dreamer.containsKey("name");
 		assert dreamer.get("name").equals("Yusuf");
 		assert dreamer.containsKey("host");
 		dreamer = (JSONObject)dreamer.get("host");
-		assert dreamer.containsKey("!type");
 		assert dreamer.get("!type").equals("com.github.sourjson.test.ObjectsPrimitivesTest$Dreamer");
-		assert dreamer.containsKey("name");
 		assert dreamer.get("name").equals("Arthur");
 		assert dreamer.containsKey("host");
 		dreamer = (JSONObject)dreamer.get("host");
-		assert dreamer.containsKey("!type");
 		assert dreamer.get("!type").equals("com.github.sourjson.test.ObjectsPrimitivesTest$Dreamer");
-		assert dreamer.containsKey("name");
 		assert dreamer.get("name").equals("Eames");
 		assert !dreamer.containsKey("host");
 
@@ -170,6 +164,44 @@ public class ObjectsPrimitivesTest {
 		Plane to = json.fromJSON(jsonObj, Plane.class, 0);
 
 		assert to.passengers == 7;
+		assert to.control == null;
+		assert to.main.name.equals("Yusuf");
+		assert to.main.host.name.equals("Arthur");
+		assert to.main.host.host.name.equals("Eames");
+		assert to.main.host.host.host == null;
+	}
+
+	@Test
+	public void embedingNoType() throws Exception {
+		Plane from = new Plane(new Dreamer(new Dreamer(new Dreamer(null, "Eames"), "Arthur"), "Yusuf"), 7);
+
+		SourJson json = new SourJson();
+		json.setPutTypes(false);
+		JSONObject ser = (JSONObject)json.toJSON(from, 0);
+
+		assert !ser.containsKey("!type");
+		assert ser.get("passengers").equals(Integer.valueOf(7));
+		assert !ser.containsKey("control");
+		assert ser.containsKey("main");
+		JSONObject dreamer = (JSONObject)ser.get("main");
+		assert !ser.containsKey("!type");
+		assert dreamer.get("name").equals("Yusuf");
+		assert dreamer.containsKey("host");
+		dreamer = (JSONObject)dreamer.get("host");
+		assert !ser.containsKey("!type");
+		assert dreamer.get("name").equals("Arthur");
+		assert dreamer.containsKey("host");
+		dreamer = (JSONObject)dreamer.get("host");
+		assert !ser.containsKey("!type");
+		assert dreamer.get("name").equals("Eames");
+		assert !dreamer.containsKey("host");
+
+		String jsonStr = ser.toJSONString();
+		Object jsonObj = JSONValue.parse(jsonStr);
+		Plane to = json.fromJSON(jsonObj, Plane.class, 0);
+
+		assert to.passengers == 7;
+		assert to.control == null;
 		assert to.main.name.equals("Yusuf");
 		assert to.main.host.name.equals("Arthur");
 		assert to.main.host.host.name.equals("Eames");
@@ -245,6 +277,27 @@ public class ObjectsPrimitivesTest {
 		assert to == Hand.TWO;
 	}
 
+	@Test
+	public void enumsNoType() throws Exception {
+		SourJson json = new SourJson();
+		json.setPutTypes(false);
+
+		String jsonStr = (String)json.toJSON(Hand.TWO, 0);
+
+		assert jsonStr.equals("TWO");
+
+		Hand to = json.fromJSON(jsonStr, Hand.class, 0);
+
+		assert to == Hand.TWO;
+	}
+
+	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Cannot deserialize .*")
+	public void enumBadType() throws Exception {
+		SourJson json = new SourJson();
+		json.fromJSON(Integer.valueOf(0), Hand.class, 0);
+	}
+
+
 	@SuppressWarnings("unchecked")
 	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Could not find .*")
 	public void classNotFound() throws Exception {
@@ -252,6 +305,18 @@ public class ObjectsPrimitivesTest {
 		JSONObject obj = new JSONObject();
 		obj.put("!type", "un.known.type.Class");
 		json.fromJSON(obj, SimpleBean.class, 0);
+	}
+
+	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = "Cannot deserialize .*")
+	public void badJsonType() throws Exception {
+		SourJson json = new SourJson();
+		json.fromJSON(json.toJSON(new String[] { "a", "b" }, 0), SimpleBean.class, 0);
+	}
+
+	@Test(expectedExceptions = SourJsonException.class, expectedExceptionsMessageRegExp = ".* is not an instance of .*")
+	public void badObjectClass() throws Exception {
+		SourJson json = new SourJson();
+		json.toJSON(new SimpleBean("Salomon", 42), Dreamer.class, 0);
 	}
 
 }
