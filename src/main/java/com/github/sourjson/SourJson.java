@@ -40,27 +40,7 @@ import com.github.sourjson.translat.def.DateTranslater;
 import com.googlecode.gentyref.GenericTypeReflector;
 
 @SuppressWarnings("javadoc")
-public class SourJson /*implements Cloneable*/ {
-
-//	public static enum AllowEmpty {
-//		YES,
-//		ROOT,
-//		NO;
-//
-//		public AllowEmpty next() {
-//			switch (this) {
-//			case YES: return YES;
-//			default: return NO;
-//			}
-//		}
-//
-//		public boolean allow() {
-//			switch (this) {
-//			case NO: return false;
-//			default: return true;
-//			}
-//		}
-//	}
+public class SourJson implements Cloneable {
 
 	private TranslaterCache tcache = new TranslaterCache();
 
@@ -68,6 +48,7 @@ public class SourJson /*implements Cloneable*/ {
 	private LinkedHashMap<Class<?>, SJTranslater<?>> hierarchyTranslaters = new LinkedHashMap<>();
 
 	@CheckForNull HashSet<Class<?>> knownClasses = new HashSet<>();
+
 	private boolean checkKnownClasses = false;
 
 	private boolean putTypes = true;
@@ -79,20 +60,20 @@ public class SourJson /*implements Cloneable*/ {
 		addTranslater(Class.class, new ClassTranslater());
 	}
 
-	/*@Override
+	@Override
 	public SourJson clone() {
 		try {
 			SourJson clone = (SourJson)super.clone();
-			clone.knownClasses = (HashSet<Class<?>>)knownClasses.clone();
+			clone.tcache = (TranslaterCache) tcache.clone();
 			clone.exactTranslaters = (HashMap<Class<?>, SJTranslater<?>>)exactTranslaters.clone();
 			clone.hierarchyTranslaters = (LinkedHashMap<Class<?>, SJTranslater<?>>)hierarchyTranslaters.clone();
+			clone.knownClasses = (HashSet<Class<?>>)knownClasses.clone();
 			return clone;
 		}
 		catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-			return null;
+			throw new InternalError();
 		}
-	}*/
+	}
 
 	public <T> void addTranslater(Class<T> forClass, SJTranslater<T> translater) {
 		exactTranslaters.put(forClass, translater);

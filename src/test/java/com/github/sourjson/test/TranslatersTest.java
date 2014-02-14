@@ -56,6 +56,7 @@ public class TranslatersTest {
 	@Test
 	public void manualRemovedTranslater() throws Exception {
 		SourJson json = new SourJson();
+		json = json.clone();
 		json.addTranslater(SimpleBean.class, new SimpleBeanTranslater());
 		json.removeTranslater(SimpleBean.class);
 
@@ -118,6 +119,7 @@ public class TranslatersTest {
 	@Test
 	public void manualRemovedHierarchyTranslater() throws Exception {
 		SourJson json = new SourJson();
+		json = json.clone();
 		json.addHierarchyTranslater(SimpleBean.class, new SimpleBeanTranslater());
 		json.removeHierarchyTranslater(SimpleBean.class);
 

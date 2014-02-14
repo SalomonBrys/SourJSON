@@ -14,9 +14,9 @@ import com.github.sourjson.exception.UnknownClassException;
 import com.github.sourjson.translat.SJTranslater;
 import com.googlecode.gentyref.GenericTypeReflector;
 
-public class TranslaterCache {
+public class TranslaterCache implements Cloneable {
 
-	private Map<TypeAndAnnos, InternalTranslater<?>> serializers = new HashMap<>();
+	private HashMap<TypeAndAnnos, InternalTranslater<?>> serializers = new HashMap<>();
 
 	private static <T> InternalTranslater<T> makeSerializer(TypeAndAnnos info, SourJson sour) {
 
@@ -67,4 +67,15 @@ public class TranslaterCache {
 		return ser;
 	}
 
+	@Override
+	public Object clone() {
+		try {
+			TranslaterCache clone = (TranslaterCache) super.clone();
+			clone.serializers = (HashMap<TypeAndAnnos, InternalTranslater<?>>) serializers.clone();
+			return clone;
+		}
+		catch (CloneNotSupportedException e) {
+			throw new InternalError();
+		}
+	}
 }
