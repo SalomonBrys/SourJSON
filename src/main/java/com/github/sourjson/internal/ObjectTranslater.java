@@ -82,7 +82,7 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		JSONObject object = new JSONObject();
 
 		for (FieldCache fc : fields) {
@@ -120,7 +120,7 @@ public class ObjectTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public T deserialize(Object from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public T deserialize(Object from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		if (!(from instanceof JSONObject))
 			throw new SourJsonException("Cannot deserialize a " + from.getClass().getSimpleName() + " into a " + typeName);
 

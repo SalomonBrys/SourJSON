@@ -154,7 +154,7 @@ public class SourJson implements Cloneable {
 
 		TypeAndAnnos info = new TypeAndAnnos(fromType, fromAnnos);
 
-		return tcache.getTranslater(info, this).serialize(from, info, enclosing, version, this);
+		return tcache.getTranslater(info, this).serialize(from, enclosing, version, this);
 	}
 
 	public @CheckForNull Object toJSON(Object from, Type fromType, double version) throws SourJsonException {
@@ -190,7 +190,7 @@ public class SourJson implements Cloneable {
 			}
 		}
 
-		return (T)tcache.getTranslater(info, this).deserialize(from, info, enclosing, version, this);
+		return (T)tcache.getTranslater(info, this).deserialize(from, enclosing, version, this);
 
 	}
 

@@ -24,7 +24,7 @@ public class TranslaterCache implements Cloneable {
 
 		SJTranslater<T> translater = sour.getTranslater(fromClass);
 		if (translater != null)
-			return new SJTranslaterTranslater<>(translater, fromClass);
+			return new SJTranslaterTranslater<>(translater, info);
 
 		if (	   JSONObject.class.isAssignableFrom(fromClass)   || JSONArray.class.isAssignableFrom(fromClass)
 				|| Number.class.isAssignableFrom(fromClass)	      || Boolean.class.isAssignableFrom(fromClass)

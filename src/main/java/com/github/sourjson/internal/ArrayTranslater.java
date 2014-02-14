@@ -1,5 +1,6 @@
 package com.github.sourjson.internal;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 
@@ -18,15 +19,17 @@ public class ArrayTranslater<T> implements InternalTranslater<T> {
 	private Type arrayComponentType;
 	private Class<T[]> arrayComponentClass;
 	private boolean strictType;
+	private AnnotatedElement el;
 
 	public ArrayTranslater(TypeAndAnnos info) {
 		arrayComponentType = GenericTypeReflector.getArrayComponentType(info.type);
 		arrayComponentClass = (Class<T[]>) GenericTypeReflector.erase(arrayComponentType);
 		strictType = info.annos.isAnnotationPresent(StrictType.class);
+		el = info.annos;
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		JSONArray array = new JSONArray();
 		int length = Array.getLength(from);
 		for (int i = 0; i < length; ++i) {
@@ -34,7 +37,7 @@ public class ArrayTranslater<T> implements InternalTranslater<T> {
 			Object json = null;
 			if (element != null) {
 				Type elementType = strictType ? arrayComponentType : element.getClass();
-				json = sour.toJSON(element, elementType, version, info.annos, from);
+				json = sour.toJSON(element, elementType, version, el, from);
 			}
 			array.add(json);
 		}
@@ -42,7 +45,7 @@ public class ArrayTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public T deserialize(Object from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public T deserialize(Object from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		if (!(from instanceof JSONArray))
 			throw new SourJsonException("Cannot deserialize a " + from.getClass().getSimpleName() + " into an array");
 
@@ -51,7 +54,7 @@ public class ArrayTranslater<T> implements InternalTranslater<T> {
 		T ret = (T) Array.newInstance(arrayComponentClass, fromArray.size());
 
 		for (int i = 0; i < fromArray.size(); ++i)
-			Array.set(ret, i, sour.fromJSON(fromArray.get(i), arrayComponentType, version, info.annos, ret));
+			Array.set(ret, i, sour.fromJSON(fromArray.get(i), arrayComponentType, version, el, ret));
 
 		return ret;
 	}

@@ -1,5 +1,6 @@
 package com.github.sourjson.internal;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 	private @CheckForNull Type mapKType;
 	private Type mapVType;
 	private boolean strictType;
+	private AnnotatedElement el;
 
 	public MapTranslater(TypeAndAnnos info) {
 		mapClass = (Class<T>) GenericTypeReflector.erase(info.type);
@@ -32,10 +34,11 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 		if (mapVType == null)
 			mapVType = Object.class;
 		strictType = info.annos.isAnnotationPresent(StrictType.class);
+		el = info.annos;
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		Map<?, ?> fromMap = (Map<?, ?>)from;
 
 		if (fromMap.isEmpty())
@@ -53,7 +56,7 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 				Object json = null;
 				if (e.getValue() != null) {
 					Type valueType = strictType ? mapVType : e.getValue().getClass();
-					json = sour.toJSON(e.getValue(), valueType, version, info.annos, from);
+					json = sour.toJSON(e.getValue(), valueType, version, el, from);
 				}
 				obj.put(e.getKey().toString(), json);
 			}
@@ -66,12 +69,12 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 			JSONObject obj = new JSONObject();
 			Map.Entry<?, ?> e = (Entry<?, ?>) it.next();
 			Type keyType = strictType ? fromKType : e.getKey().getClass();
-			Object json = sour.toJSON(e.getKey(), keyType, version, info.annos, from);
+			Object json = sour.toJSON(e.getKey(), keyType, version, el, from);
 			obj.put("!k", json);
 			json = null;
 			if (e.getValue() != null) {
 				Type valueType = strictType ? mapVType : e.getValue().getClass();
-				json = sour.toJSON(e.getValue(), valueType, version, info.annos, from);
+				json = sour.toJSON(e.getValue(), valueType, version, el, from);
 			}
 			obj.put("!v", json);
 			list.add(obj);
@@ -80,7 +83,7 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public T deserialize(Object from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public T deserialize(Object from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 
 		Map<?, ?> map;
 		if (Map.class.equals(mapClass))
@@ -93,7 +96,7 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 
 			for (Entry<String, ?> entry : (Set<Map.Entry<String, ?>>)fromObject.entrySet()) {
 				String key = String.valueOf(entry.getKey());
-				((Map<String, Object>)map).put(key, sour.fromJSON(entry.getValue(), mapVType, version, info.annos, map));
+				((Map<String, Object>)map).put(key, sour.fromJSON(entry.getValue(), mapVType, version, el, map));
 			}
 
 			return (T)map;
@@ -107,8 +110,8 @@ public class MapTranslater<T> implements InternalTranslater<T> {
 				JSONObject entryObj = (JSONObject)entry;
 				if (!entryObj.containsKey("!k"))
 					throw new SourJsonException("Cannot deserialize a map: JSONObject map entry is missing !k property of type " + mapKType);
-				Object key = sour.fromJSON(entryObj.get("!k"), mapKType, version, info.annos, map);
-				Object value = sour.fromJSON(entryObj.get("!v"), mapVType, version, info.annos, map);
+				Object key = sour.fromJSON(entryObj.get("!k"), mapKType, version, el, map);
+				Object value = sour.fromJSON(entryObj.get("!v"), mapVType, version, el, map);
 				((Map<Object, Object>)map).put(key, value);
 			}
 

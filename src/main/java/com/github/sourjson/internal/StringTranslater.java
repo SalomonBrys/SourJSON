@@ -14,12 +14,12 @@ class StringTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		return from.toString();
 	}
 
 	@Override
-	public T deserialize(Object from, TypeAndAnnos info, Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public T deserialize(Object from, Object enclosing, double version, SourJson sour) throws SourJsonException {
 		if (fromClass.equals(char.class) || fromClass.equals(Character.class))
 			return (T)Character.valueOf(((String)from).charAt(0));
 

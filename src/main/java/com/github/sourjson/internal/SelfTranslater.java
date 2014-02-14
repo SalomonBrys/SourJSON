@@ -14,13 +14,13 @@ public class SelfTranslater<T> implements InternalTranslater<T> {
 	}
 
 	@Override
-	public Object serialize(T from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public Object serialize(T from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		return from;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public T deserialize(Object from, TypeAndAnnos info, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
+	public T deserialize(Object from, @CheckForNull Object enclosing, double version, SourJson sour) throws SourJsonException {
 		if (from instanceof Number) {
 			Number numFrom = (Number)from;
 			if (fromClass.equals(byte.class) || fromClass.equals(Byte.class))
